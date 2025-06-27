@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Client {
+  id            String       @id @default(cuid())
+  name          String
+  companyName   String?
+  email         String?
+  phone         String?
+  address       String?
+  postalCode    String?
+  city          String?
+  prefecture    String?
+  contactPerson String?
+  contactPhone  String?
+  contactEmail  String?
+  industry      String?
+  notes         String?
+  status        ClientStatus @default(ACTIVE)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+  userId        String
+
+  // 関連
+  sales         Sales[]
+
+  @@map("clients")
+}
+
+model Sales {
+  id          String   @id @default(cuid())
+  amount      Int      // 売上額（円）
+  date        DateTime // 売上日
+  description String?  // 備考
+  category    String?  // カテゴリ（工事費、材料費など）
+  status      SalesStatus @default(COMPLETED)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  userId      String   // ClerkのユーザーID
+  
+  // 取引先との関連
+  clientId    String
+  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("sales")
+}
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  PROSPECT
+}
+
+enum SalesStatus {
+  COMPLETED
+  PENDING
+  CANCELLED
+}
