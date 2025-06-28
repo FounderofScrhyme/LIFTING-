@@ -33,33 +33,79 @@ export async function GET(request: NextRequest) {
     }
 
     // 月別集計
-    const monthlySales = await prisma.$queryRaw`
-      SELECT 
-        EXTRACT(MONTH FROM date) as month,
-        SUM(amount) as total_amount,
-        COUNT(*) as count
-      FROM sales 
-      WHERE "userId" = ${userId}
-        AND date >= ${new Date(`${year}-01-01`)}
-        AND date <= ${new Date(`${year}-12-31`)}
-        ${clientId ? `AND "clientId" = ${clientId}` : ''}
-      GROUP BY EXTRACT(MONTH FROM date)
-      ORDER BY month
-    `;
+    let monthlySales;
+    if (clientId) {
+      monthlySales = await prisma.$queryRaw`
+        SELECT 
+          EXTRACT(MONTH FROM date) as month,
+          SUM(amount) as total_amount,
+          COUNT(*) as count
+        FROM sales 
+        WHERE "userId" = ${userId}
+          AND date >= ${new Date(`${year}-01-01`)}
+          AND date <= ${new Date(`${year}-12-31`)}
+          AND "clientId" = ${clientId}
+        GROUP BY EXTRACT(MONTH FROM date)
+        ORDER BY month
+      `;
+    } else {
+      monthlySales = await prisma.$queryRaw`
+        SELECT 
+          EXTRACT(MONTH FROM date) as month,
+          SUM(amount) as total_amount,
+          COUNT(*) as count
+        FROM sales 
+        WHERE "userId" = ${userId}
+          AND date >= ${new Date(`${year}-01-01`)}
+          AND date <= ${new Date(`${year}-12-31`)}
+        GROUP BY EXTRACT(MONTH FROM date)
+        ORDER BY month
+      `;
+    }
 
     // 年別集計（過去5年）
-    const yearlySales = await prisma.$queryRaw`
-      SELECT 
-        EXTRACT(YEAR FROM date) as year,
-        SUM(amount) as total_amount,
-        COUNT(*) as count
-      FROM sales 
-      WHERE "userId" = ${userId}
-        ${clientId ? `AND "clientId" = ${clientId}` : ''}
-      GROUP BY EXTRACT(YEAR FROM date)
-      ORDER BY year DESC
-      LIMIT 5
-    `;
+    let yearlySales;
+    if (clientId) {
+      yearlySales = await prisma.$queryRaw`
+        SELECT 
+          EXTRACT(YEAR FROM date) as year,
+          SUM(amount) as total_amount,
+          COUNT(*) as count
+        FROM sales 
+        WHERE "userId" = ${userId}
+          AND "clientId" = ${clientId}
+        GROUP BY EXTRACT(YEAR FROM date)
+        ORDER BY year DESC
+        LIMIT 5
+      `;
+    } else {
+      yearlySales = await prisma.$queryRaw`
+        SELECT 
+          EXTRACT(YEAR FROM date) as year,
+          SUM(amount) as total_amount,
+          COUNT(*) as count
+        FROM sales 
+        WHERE "userId" = ${userId}
+        GROUP BY EXTRACT(YEAR FROM date)
+        ORDER BY year DESC
+        LIMIT 5
+      `;
+    }
+
+    // BigIntをNumberに変換する関数
+    const convertBigIntToNumber = (data: any[]): any[] => {
+      return data.map(item => ({
+        ...item,
+        month: Number(item.month),
+        year: Number(item.year),
+        total_amount: Number(item.total_amount),
+        count: Number(item.count)
+      }));
+    };
+
+    // 集計結果をNumber型に変換
+    const convertedMonthlySales = convertBigIntToNumber(monthlySales as any[]);
+    const convertedYearlySales = convertBigIntToNumber(yearlySales as any[]);
 
     // 今年の総売上
     const currentYearTotal = await prisma.sales.aggregate({
@@ -96,15 +142,15 @@ export async function GET(request: NextRequest) {
 
     const summary = {
       currentYear: {
-        total: currentYearTotal._sum.amount || 0,
+        total: Number(currentYearTotal._sum.amount) || 0,
         count: currentYearTotal._count,
       },
       currentMonth: {
-        total: currentMonthTotal._sum.amount || 0,
+        total: Number(currentMonthTotal._sum.amount) || 0,
         count: currentMonthTotal._count,
       },
-      monthly: monthlySales,
-      yearly: yearlySales,
+      monthly: convertedMonthlySales,
+      yearly: convertedYearlySales,
     };
 
     console.log('GET /api/sales/summary - 取得成功');

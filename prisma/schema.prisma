@@ -28,27 +28,75 @@ model Client {
   userId        String
 
   // 関連
-  sales         Sales[]
+  sales Sales[]
 
   @@map("clients")
 }
 
+model Employee {
+  id                     String   @id @default(cuid())
+  name                   String
+  email                  String?
+  phone                  String?
+  emergencyContactPerson String? // 緊急連絡先名
+  emergencyContactPhone  String? // 緊急連絡先電話番号
+  address                String?
+  postalCode             String?
+  city                   String?
+  prefecture             String?
+  position               String? // 役職
+  unitPay                Int? // 現場単価（円）
+  hourlyOvertimePay      Int? // 一時間あたりの残業代
+  notes                  String? // 備考
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  userId                 String // ClerkのユーザーID
+
+  // 関連
+  payrolls Payroll[]
+
+  @@map("employees")
+}
+
 model Sales {
-  id          String   @id @default(cuid())
-  amount      Int      // 売上額（円）
+  id          String      @id @default(cuid())
+  amount      Int // 売上額（円）
   date        DateTime // 売上日
-  description String?  // 備考
-  category    String?  // カテゴリ（工事費、材料費など）
+  description String? // 備考
+  category    String? // カテゴリ（工事費、材料費など）
   status      SalesStatus @default(COMPLETED)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  userId      String   // ClerkのユーザーID
-  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  userId      String // ClerkのユーザーID
+
   // 取引先との関連
-  clientId    String
-  client      Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@map("sales")
+}
+
+model Payroll {
+  id            String            @id @default(cuid())
+  employeeId    String
+  employee      Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  periodType    PayrollPeriodType @default(MONTHLY) // 給与期間タイプ
+  startDate     DateTime // 給与期間開始日
+  endDate       DateTime // 給与期間終了日
+  workHours     Int? // 勤務時間（時間）
+  overtimeHours Int? // 残業時間（時間）
+  siteCount     Int // 出勤現場数
+  sitePay       Int // 現場手当（現場数×現場単価）
+  overtime      Int // 残業手当（残業時間×時間単価）
+  totalAmount   Int // 総支給額（現場手当＋残業手当）
+  status        PayrollStatus     @default(PENDING)
+  paymentDate   DateTime? // 支払い日
+  notes         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  userId        String // ClerkのユーザーID
+
+  @@map("payrolls")
 }
 
 enum ClientStatus {
@@ -61,4 +109,15 @@ enum SalesStatus {
   COMPLETED
   PENDING
   CANCELLED
+}
+
+enum PayrollStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum PayrollPeriodType {
+  WEEKLY
+  MONTHLY
 }

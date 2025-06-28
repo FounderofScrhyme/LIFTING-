@@ -3,7 +3,8 @@
 import { UserButton } from '@clerk/nextjs';
 import { Bell, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ModeToggle } from '../ModeToggle';
+import ModeToggle from '../ModeToggle';
+
 
 export function Header() {
     return (

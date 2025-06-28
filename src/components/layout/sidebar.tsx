@@ -84,11 +84,11 @@ export function Sidebar() {
             </nav>
 
             {/* フッター */}
-            <div className="border-t border-gray-200 p-4">
+            {/* <div className="border-t border-gray-200 p-4">
                 <div className="text-xs text-gray-500 dark:text-gray-100">
                     Altha Platforms
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 }

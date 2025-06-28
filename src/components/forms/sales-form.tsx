@@ -41,8 +41,8 @@ export function SalesForm({ sales, mode }: SalesFormProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [clients, setClients] = useState<Client[]>([]);
     const [isClient, setIsClient] = useState(false);
-    const [formData, setFormData] = useState<CreateSalesInput>({
-        amount: sales?.amount || 0,
+    const [formData, setFormData] = useState<Omit<CreateSalesInput, 'amount'> & { amount: string | number }>({
+        amount: sales?.amount || '',
         date: '',
         description: sales?.description || '',
         category: sales?.category || '',
@@ -85,7 +85,7 @@ export function SalesForm({ sales, mode }: SalesFormProps) {
         }
     };
 
-    const handleInputChange = (field: keyof CreateSalesInput, value: string | number) => {
+    const handleInputChange = (field: keyof typeof formData, value: string | number) => {
         setFormData(prev => ({
             ...prev,
             [field]: value,
@@ -103,16 +103,29 @@ export function SalesForm({ sales, mode }: SalesFormProps) {
             return;
         }
 
+        // amountを数値に変換
+        const amount = typeof formData.amount === 'string' ? parseInt(formData.amount) || 0 : formData.amount;
+        if (amount <= 0) {
+            alert('有効な売上額を入力してください');
+            setIsLoading(false);
+            return;
+        }
+
         try {
             const url = mode === 'create' ? '/api/sales' : `/api/sales/${sales?.id}`;
             const method = mode === 'create' ? 'POST' : 'PUT';
+
+            const requestData = {
+                ...formData,
+                amount: amount,
+            };
 
             const response = await fetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(requestData),
             });
 
             if (!response.ok) {
@@ -197,14 +210,18 @@ export function SalesForm({ sales, mode }: SalesFormProps) {
                                 id="amount"
                                 type="number"
                                 value={formData.amount}
-                                onChange={(e) => handleInputChange('amount', parseInt(e.target.value) || 0)}
+                                onChange={(e) => handleInputChange('amount', e.target.value)}
                                 placeholder="1000000"
                                 required
-                                min="0"
                             />
-                            {formData.amount > 0 && (
+                            {typeof formData.amount === 'number' && formData.amount > 0 && (
                                 <p className="text-sm text-gray-600">
                                     表示: ¥{formatCurrency(formData.amount)}
+                                </p>
+                            )}
+                            {typeof formData.amount === 'string' && formData.amount && parseInt(formData.amount) > 0 && (
+                                <p className="text-sm text-gray-600">
+                                    表示: ¥{formatCurrency(parseInt(formData.amount))}
                                 </p>
                             )}
                         </div>
