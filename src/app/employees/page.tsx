@@ -15,7 +15,7 @@ export default async function EmployeesPage() {
 
     return (
         <DashboardLayout>
-            <div className="p-6 dark:bg-gray-900 min-h-sceen">
+            <div className="p-6 dark:bg-gray-900 min-h-screen">
                 <div className="flex justify-between items-center mb-8">
                     <div>
                         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">従業員管理</h1>

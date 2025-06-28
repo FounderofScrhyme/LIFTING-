@@ -164,14 +164,14 @@ export function EmployeeList() {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => router.push(`/clients/${employee.id}`)}
+                                            onClick={() => router.push(`/employees/${employee.id}`)}
                                         >
                                             <Eye className="h-4 w-4" />
                                         </Button>
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            onClick={() => router.push(`/clients/${employee.id}/edit`)}
+                                            onClick={() => router.push(`/employees/${employee.id}/edit`)}
                                         >
                                             <Edit className="h-4 w-4" />
                                         </Button>

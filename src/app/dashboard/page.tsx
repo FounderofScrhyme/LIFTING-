@@ -11,6 +11,7 @@ import {
     Calendar,
     AlertCircle
 } from 'lucide-react';
+import { prisma } from '@/lib/db';
 
 export default async function DashboardPage() {
     const { userId } = await auth();
@@ -20,13 +21,85 @@ export default async function DashboardPage() {
         redirect('/sign-in');
     }
 
+    // 動的データの取得
+    const [
+        clientCount,
+        employeeCount,
+        currentMonthSales,
+        lastMonthSales
+    ] = await Promise.all([
+        // 取引先数
+        prisma.client.count({
+            where: { userId }
+        }),
+        // 従業員数
+        prisma.employee.count({
+            where: { userId }
+        }),
+        // 今月の売上
+        prisma.sales.aggregate({
+            where: {
+                userId,
+                date: {
+                    gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                    lte: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0),
+                }
+            },
+            _sum: {
+                amount: true
+            }
+        }),
+        // 先月の売上（比較用）
+        prisma.sales.aggregate({
+            where: {
+                userId,
+                date: {
+                    gte: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+                    lte: new Date(new Date().getFullYear(), new Date().getMonth(), 0),
+                }
+            },
+            _sum: {
+                amount: true
+            }
+        })
+    ]);
+
+    // 売上データの処理
+    const currentMonthAmount = currentMonthSales._sum.amount || 0;
+    const lastMonthAmount = lastMonthSales._sum.amount || 0;
+    const salesChange = lastMonthAmount > 0
+        ? ((currentMonthAmount - lastMonthAmount) / lastMonthAmount * 100).toFixed(1)
+        : '0';
+
+    // 売上変化の表示テキスト
+    const getSalesChangeText = () => {
+        if (lastMonthAmount === 0) return '先月データなし';
+        const change = parseFloat(salesChange);
+        if (change > 0) return `+${salesChange}% from last month`;
+        if (change < 0) return `${salesChange}% from last month`;
+        return '先月と同額';
+    };
+
+    // 売上変化の色
+    const getSalesChangeColor = () => {
+        if (lastMonthAmount === 0) return 'text-muted-foreground';
+        const change = parseFloat(salesChange);
+        if (change > 0) return 'text-green-600';
+        if (change < 0) return 'text-red-600';
+        return 'text-muted-foreground';
+    };
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('ja-JP').format(amount);
+    };
+
     return (
         <DashboardLayout>
             <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
                 {/* ページヘッダー */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900">ダッシュボード</h1>
-                    <p className="text-gray-600 mt-2">今日の業務状況を確認しましょう</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">ダッシュボード</h1>
+                    <p className="text-gray-600 dark:text-gray-400 mt-2">今日の業務状況を確認しましょう</p>
                 </div>
 
                 {/* 統計カード */}
@@ -37,9 +110,9 @@ export default async function DashboardPage() {
                             <Building2 className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">24</div>
+                            <div className="text-2xl font-bold">{clientCount}</div>
                             <p className="text-xs text-muted-foreground">
-                                +2 from last month
+                                登録済み取引先
                             </p>
                         </CardContent>
                     </Card>
@@ -50,9 +123,9 @@ export default async function DashboardPage() {
                             <DollarSign className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">¥12,450,000</div>
-                            <p className="text-xs text-muted-foreground">
-                                +20.1% from last month
+                            <div className="text-2xl font-bold">¥{formatCurrency(currentMonthAmount)}</div>
+                            <p className={`text-xs ${getSalesChangeColor()}`}>
+                                {getSalesChangeText()}
                             </p>
                         </CardContent>
                     </Card>
@@ -63,9 +136,9 @@ export default async function DashboardPage() {
                             <MapPin className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">8</div>
+                            <div className="text-2xl font-bold">-</div>
                             <p className="text-xs text-muted-foreground">
-                                2件完了予定
+                                現場管理機能は今後実装予定
                             </p>
                         </CardContent>
                     </Card>
@@ -76,9 +149,9 @@ export default async function DashboardPage() {
                             <Users className="h-4 w-4 text-muted-foreground" />
                         </CardHeader>
                         <CardContent>
-                            <div className="text-2xl font-bold">32</div>
+                            <div className="text-2xl font-bold">{employeeCount}</div>
                             <p className="text-xs text-muted-foreground">
-                                2名新規採用
+                                登録済み従業員
                             </p>
                         </CardContent>
                     </Card>
@@ -99,22 +172,22 @@ export default async function DashboardPage() {
                                 <div className="flex items-center space-x-4">
                                     <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium">新規取引先「株式会社サンプル」を追加</p>
-                                        <p className="text-xs text-gray-500">2時間前</p>
+                                        <p className="text-sm font-medium">取引先管理機能が利用可能</p>
+                                        <p className="text-xs text-gray-500">システム更新</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-4">
                                     <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium">現場「東京ビル建設」が完了</p>
-                                        <p className="text-xs text-gray-500">1日前</p>
+                                        <p className="text-sm font-medium">従業員管理機能が利用可能</p>
+                                        <p className="text-xs text-gray-500">システム更新</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-4">
                                     <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium">給与計算が完了しました</p>
-                                        <p className="text-xs text-gray-500">2日前</p>
+                                        <p className="text-sm font-medium">売上管理機能が利用可能</p>
+                                        <p className="text-xs text-gray-500">システム更新</p>
                                     </div>
                                 </div>
                             </div>
@@ -134,22 +207,22 @@ export default async function DashboardPage() {
                                 <div className="flex items-center space-x-4">
                                     <Calendar className="h-4 w-4 text-blue-500" />
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium">取引先ミーティング</p>
-                                        <p className="text-xs text-gray-500">明日 14:00</p>
+                                        <p className="text-sm font-medium">システム機能確認</p>
+                                        <p className="text-xs text-gray-500">随時</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-4">
                                     <AlertCircle className="h-4 w-4 text-red-500" />
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium">給与支払い締切</p>
-                                        <p className="text-xs text-gray-500">金曜日</p>
+                                        <p className="text-sm font-medium">データバックアップ</p>
+                                        <p className="text-xs text-gray-500">定期的に</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-4">
                                     <TrendingUp className="h-4 w-4 text-green-500" />
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium">月次売上報告</p>
-                                        <p className="text-xs text-gray-500">来週月曜日</p>
+                                        <p className="text-sm font-medium">機能拡張計画</p>
+                                        <p className="text-xs text-gray-500">継続中</p>
                                     </div>
                                 </div>
                             </div>

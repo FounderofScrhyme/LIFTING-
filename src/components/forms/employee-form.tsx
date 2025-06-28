@@ -253,7 +253,7 @@ export function EmployeeForm({ employee, mode }: EmployeeFormProps) {
                                     type="number"
                                     value={formData.unitPay || ''}
                                     onChange={(e) => handleInputChange('unitPay', e.target.value ? parseInt(e.target.value) : undefined)}
-                                    placeholder="15000"
+                                    placeholder="8000"
                                     min="0"
                                 />
                                 {formData.unitPay && formData.unitPay > 0 && (

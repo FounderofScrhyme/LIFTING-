@@ -53,7 +53,8 @@ model Employee {
   userId                 String // ClerkのユーザーID
 
   // 関連
-  payrolls Payroll[]
+  payrolls      Payroll[]
+  siteEmployees SiteEmployee[]
 
   @@map("employees")
 }
@@ -99,6 +100,43 @@ model Payroll {
   @@map("payrolls")
 }
 
+model Site {
+  id            String     @id @default(cuid())
+  name          String     // 現場名
+  contractor    String     // 工務店名
+  postalCode    String?    // 郵便番号
+  prefecture    String?    // 都道府県
+  city          String?    // 市区町村
+  address       String?    // 番地
+  startDate     DateTime   // 開始日
+  employeeNames String?    // 派遣従業員名（カンマ区切り）
+  notes         String?    // 備考
+  status        SiteStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  userId        String     // ClerkのユーザーID
+
+  // 関連
+  siteEmployees SiteEmployee[]
+
+  @@map("sites")
+}
+
+model SiteEmployee {
+  id         String   @id @default(cuid())
+  siteId     String
+  employeeId String
+  createdAt  DateTime @default(now())
+  userId     String   // ClerkのユーザーID
+
+  // 関連
+  site     Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, employeeId])
+  @@map("site_employees")
+}
+
 enum ClientStatus {
   ACTIVE
   INACTIVE
@@ -120,4 +158,10 @@ enum PayrollStatus {
 enum PayrollPeriodType {
   WEEKLY
   MONTHLY
+}
+
+enum SiteStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }

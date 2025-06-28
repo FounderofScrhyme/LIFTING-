@@ -6,11 +6,10 @@ import { cn } from '@/lib/utils';
 import {
     LayoutDashboard,
     Users,
-    DollarSign,
     MapPin,
-    UserCheck,
     CreditCard,
-    Building2
+    Building2,
+    JapaneseYen
 } from 'lucide-react';
 
 const navigation = [
@@ -27,7 +26,7 @@ const navigation = [
     {
         name: '売上管理',
         href: '/sales',
-        icon: DollarSign,
+        icon: JapaneseYen,
     },
     {
         name: '現場情報',
@@ -50,7 +49,7 @@ export function Sidebar() {
     const pathname = usePathname();
 
     return (
-        <div className="flex h-full w-64 flex-col text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 border-r border-gray-200">
+        <div className="hidden md:flex h-full w-64 flex-col text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900 border-r border-gray-200">
             {/* ロゴ・ヘッダー */}
             <div className="flex h-16 items-center px-6 border-b border-gray-200">
                 <h1 className="text-xl font-bold">LIFTING業務システム</h1>
