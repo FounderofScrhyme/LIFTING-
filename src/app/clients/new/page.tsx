@@ -1,5 +1,4 @@
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { ClientForm } from "@/components/forms/client-form";
 
@@ -7,12 +6,12 @@ export default async function NewClientPage() {
   const { userId } = await auth();
 
   if (!userId) {
-    redirect("/sign-in");
+    return null;
   }
 
   return (
     <DashboardLayout>
-      <div className="p-6 dark:bg-gray-900 min-h-screen">
+      <div className="p-6">
         <ClientForm mode="create" />
       </div>
     </DashboardLayout>

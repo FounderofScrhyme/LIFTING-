@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Site } from "@/types/site";
 import { auth } from "@clerk/nextjs/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
@@ -18,7 +18,7 @@ export default async function SiteDetailPage({ params }: SiteDetailPageProps) {
   const { id } = await params;
 
   if (!userId) {
-    redirect("/sign-in");
+    notFound();
   }
 
   const siteData = await prisma.site.findFirst({
@@ -61,17 +61,29 @@ export default async function SiteDetailPage({ params }: SiteDetailPageProps) {
     userId: siteData.userId,
     createdAt: siteData.createdAt.toISOString(),
     updatedAt: siteData.updatedAt.toISOString(),
-    employees: siteData.siteEmployees.map((emp) => ({
-      id: emp.id,
-      siteId: emp.siteId,
-      employeeId: emp.employeeId,
-      userId: emp.userId,
-      createdAt: emp.createdAt.toISOString(),
-      employee: {
-        id: emp.employee.id,
-        name: emp.employee.name,
-      },
-    })),
+    employees: siteData.siteEmployees.map(
+      (emp: {
+        id: string;
+        siteId: string;
+        employeeId: string;
+        userId: string;
+        createdAt: Date;
+        employee: {
+          id: string;
+          name: string;
+        };
+      }) => ({
+        id: emp.id,
+        siteId: emp.siteId,
+        employeeId: emp.employeeId,
+        userId: emp.userId,
+        createdAt: emp.createdAt.toISOString(),
+        employee: {
+          id: emp.employee.id,
+          name: emp.employee.name,
+        },
+      })
+    ),
   };
 
   const formatAddress = (site: Site) => {

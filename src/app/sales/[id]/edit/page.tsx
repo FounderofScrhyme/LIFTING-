@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
 import { Sales } from "@/types/sales";
 import { auth } from "@clerk/nextjs/server";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { SalesForm } from "@/components/forms/sales-form";
 
@@ -15,7 +15,7 @@ export default async function EditSalesPage({ params }: EditSalesPageProps) {
   const { userId } = await auth();
 
   if (!userId) {
-    redirect("/sign-in");
+    notFound();
   }
 
   const salesData = await prisma.sales.findFirst({

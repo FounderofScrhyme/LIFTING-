@@ -1,20 +1,19 @@
 import { EmployeeForm } from "@/components/forms/employee-form";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { auth } from "@clerk/nextjs/server";
-import { redirect } from "next/navigation";
 
 export default async function NewEmployeePage() {
-    const { userId } = await auth();
+  const { userId } = await auth();
 
-    if (!userId) {
-        redirect("/sign-in")
-    }
+  if (!userId) {
+    return null;
+  }
 
-    return (
-        <DashboardLayout>
-            <div className="p-6 dark:bg-gray-900 min-h-screen">
-                <EmployeeForm mode="create" />
-            </div>
-        </DashboardLayout>
-    )
+  return (
+    <DashboardLayout>
+      <div className="p-6">
+        <EmployeeForm mode="create" />
+      </div>
+    </DashboardLayout>
+  );
 }
