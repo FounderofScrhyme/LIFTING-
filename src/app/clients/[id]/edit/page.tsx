@@ -6,13 +6,14 @@ import { prisma } from "@/lib/db";
 import { Client } from "@/types/client";
 
 interface EditClientPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditClientPage({ params }: EditClientPageProps) {
   const { userId } = await auth();
+  const { id } = await params;
 
   if (!userId) {
     notFound();
@@ -20,7 +21,7 @@ export default async function EditClientPage({ params }: EditClientPageProps) {
 
   const clientData = await prisma.client.findFirst({
     where: {
-      id: params.id,
+      id,
       userId,
     },
   });
