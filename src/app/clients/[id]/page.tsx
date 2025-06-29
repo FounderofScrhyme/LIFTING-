@@ -19,9 +19,9 @@ import Link from "next/link";
 import { Client } from "@/types/client";
 
 interface ClientDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ClientDetailPage({
