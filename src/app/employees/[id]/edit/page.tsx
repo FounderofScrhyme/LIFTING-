@@ -6,15 +6,16 @@ import { prisma } from "@/lib/db";
 import { Employee } from "@/types/employee";
 
 interface EditEmployeePageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditEmployeePage({
   params,
 }: EditEmployeePageProps) {
   const { userId } = await auth();
+  const { id } = await params;
 
   if (!userId) {
     notFound();
@@ -22,7 +23,7 @@ export default async function EditEmployeePage({
 
   const employeeData = await prisma.employee.findFirst({
     where: {
-      id: params.id,
+      id,
       userId,
     },
   });

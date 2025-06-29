@@ -20,9 +20,9 @@ import Link from "next/link";
 import { DeleteEmployeeButton } from "@/components/employees/delete-employee-button";
 
 interface EmployeeDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EmployeeDetailPage({

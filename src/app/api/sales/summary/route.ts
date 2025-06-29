@@ -1,33 +1,45 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/db';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/db";
+
+type SalesSummary = {
+  month?: bigint | number;
+  year?: bigint | number;
+  total_amount: bigint | number;
+  count: bigint | number;
+};
 
 // GET: 売上の期間別集計を取得
 export async function GET(request: NextRequest) {
   try {
-    console.log('GET /api/sales/summary - 開始');
+    console.log("GET /api/sales/summary - 開始");
     const { userId } = await auth();
-    
+
     if (!userId) {
-      console.log('GET /api/sales/summary - 認証エラー');
-      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+      console.log("GET /api/sales/summary - 認証エラー");
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
-    const year = searchParams.get('year') || new Date().getFullYear().toString();
-    const clientId = searchParams.get('clientId');
+    const year =
+      searchParams.get("year") || new Date().getFullYear().toString();
+    const clientId = searchParams.get("clientId");
 
-    console.log('GET /api/sales/summary - パラメータ:', { year, clientId });
+    console.log("GET /api/sales/summary - パラメータ:", { year, clientId });
 
     // フィルタ条件を構築
-    const where: any = { 
+    const where: {
+      userId: string;
+      date: { gte: Date; lte: Date };
+      clientId?: string;
+    } = {
       userId,
       date: {
         gte: new Date(`${year}-01-01`),
         lte: new Date(`${year}-12-31`),
       },
     };
-    
+
     if (clientId) {
       where.clientId = clientId;
     }
@@ -93,19 +105,23 @@ export async function GET(request: NextRequest) {
     }
 
     // BigIntをNumberに変換する関数
-    const convertBigIntToNumber = (data: any[]): any[] => {
-      return data.map(item => ({
+    const convertBigIntToNumber = (data: SalesSummary[]): SalesSummary[] => {
+      return data.map((item) => ({
         ...item,
-        month: Number(item.month),
-        year: Number(item.year),
+        month: item.month !== undefined ? Number(item.month) : undefined,
+        year: item.year !== undefined ? Number(item.year) : undefined,
         total_amount: Number(item.total_amount),
-        count: Number(item.count)
+        count: Number(item.count),
       }));
     };
 
     // 集計結果をNumber型に変換
-    const convertedMonthlySales = convertBigIntToNumber(monthlySales as any[]);
-    const convertedYearlySales = convertBigIntToNumber(yearlySales as any[]);
+    const convertedMonthlySales = convertBigIntToNumber(
+      monthlySales as SalesSummary[]
+    );
+    const convertedYearlySales = convertBigIntToNumber(
+      yearlySales as SalesSummary[]
+    );
 
     // 今年の総売上
     const currentYearTotal = await prisma.sales.aggregate({
@@ -129,8 +145,12 @@ export async function GET(request: NextRequest) {
       where: {
         userId,
         date: {
-          gte: new Date(`${year}-${currentMonth.toString().padStart(2, '0')}-01`),
-          lte: new Date(`${year}-${currentMonth.toString().padStart(2, '0')}-31`),
+          gte: new Date(
+            `${year}-${currentMonth.toString().padStart(2, "0")}-01`
+          ),
+          lte: new Date(
+            `${year}-${currentMonth.toString().padStart(2, "0")}-31`
+          ),
         },
         ...(clientId && { clientId }),
       },
@@ -153,13 +173,13 @@ export async function GET(request: NextRequest) {
       yearly: convertedYearlySales,
     };
 
-    console.log('GET /api/sales/summary - 取得成功');
+    console.log("GET /api/sales/summary - 取得成功");
     return NextResponse.json(summary);
   } catch (error) {
-    console.error('GET /api/sales/summary - エラー:', error);
+    console.error("GET /api/sales/summary - エラー:", error);
     return NextResponse.json(
-      { error: '売上集計の取得に失敗しました' },
+      { error: "売上集計の取得に失敗しました" },
       { status: 500 }
     );
   }
-} 
+}
