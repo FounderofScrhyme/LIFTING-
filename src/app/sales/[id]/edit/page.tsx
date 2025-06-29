@@ -6,61 +6,61 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { SalesForm } from "@/components/forms/sales-form";
 
 interface EditSalesPageProps {
-    params: {
-        id: string;
-    }
+  params: {
+    id: string;
+  };
 }
 
 export default async function EditSalesPage({ params }: EditSalesPageProps) {
-    const { userId } = await auth()
+  const { userId } = await auth();
 
-    if (!userId) {
-        redirect("/sign-in");
-    }
+  if (!userId) {
+    redirect("/sign-in");
+  }
 
-    const salesData = await prisma.sales.findFirst({
-        where: {
-            id: params.id,
-            userId
+  const salesData = await prisma.sales.findFirst({
+    where: {
+      id: params.id,
+      userId,
+    },
+    include: {
+      client: {
+        select: {
+          id: true,
+          name: true,
+          companyName: true,
         },
-        include: {
-            client: {
-                select: {
-                    id: true,
-                    name: true,
-                    companyName: true,
-                }
-            }
-        }
-    })
+      },
+    },
+  });
 
-    if (!salesData) {
-        notFound();
-    }
+  if (!salesData) {
+    notFound();
+  }
 
-    const sales: Sales = {
-        id: salesData.id,
-        amount: salesData.amount,
-        date: salesData.date,
-        description: salesData.description || undefined,
-        category: salesData.category || undefined,
-        status: salesData.status,
-        createdAt: salesData.createdAt,
-        updatedAt: salesData.updatedAt,
-        userId: salesData.userId,
-        clientId: salesData.clientId,
-        client: {
-            id: salesData.client.id,
-            name: salesData.client.name,
-            companyName: salesData.client.companyName || undefined,
-        }
-    }
+  const sales: Sales = {
+    id: salesData.id,
+    amount: salesData.amount,
+    date: salesData.date,
+    description: salesData.description || undefined,
+    category: salesData.category || undefined,
+    status: salesData.status,
+    createdAt: salesData.createdAt,
+    updatedAt: salesData.updatedAt,
+    userId: salesData.userId,
+    clientId: salesData.clientId,
+    client: {
+      id: salesData.client.id,
+      name: salesData.client.name,
+      companyName: salesData.client.companyName || undefined,
+    },
+  };
 
-    return (
-        <DashboardLayout>
-            <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
-                <SalesForm sales={sales} mode="edit" />
-            </div>
-        </DashboardLayout>
-    );
+  return (
+    <DashboardLayout>
+      <div className="p-6 bg-gray-100 dark:bg-gray-900 min-h-screen">
+        <SalesForm sales={sales} mode="edit" />
+      </div>
+    </DashboardLayout>
+  );
 }
