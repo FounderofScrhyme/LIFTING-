@@ -6,13 +6,14 @@ import { DashboardLayout } from "@/components/layout/dashboard-layout";
 import { SalesForm } from "@/components/forms/sales-form";
 
 interface EditSalesPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function EditSalesPage({ params }: EditSalesPageProps) {
   const { userId } = await auth();
+  const { id } = await params;
 
   if (!userId) {
     notFound();
@@ -20,7 +21,7 @@ export default async function EditSalesPage({ params }: EditSalesPageProps) {
 
   const salesData = await prisma.sales.findFirst({
     where: {
-      id: params.id,
+      id,
       userId,
     },
     include: {

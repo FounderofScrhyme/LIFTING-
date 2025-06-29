@@ -8,9 +8,9 @@ import { Button } from "@/components/ui/button";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
 interface SiteDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function SiteDetailPage({ params }: SiteDetailPageProps) {
