@@ -1,13 +1,15 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import Image from "next/image";
+import { SignInButton, SignUpButton } from "@clerk/nextjs";
+import { Button } from "@/components/ui/button";
 
 export default async function Home() {
   const { userId } = await auth();
 
   // 認証済みユーザーはダッシュボードにリダイレクト
   if (userId) {
-    redirect('/dashboard');
+    redirect("/dashboard");
   }
 
   return (
@@ -15,7 +17,9 @@ export default async function Home() {
       <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
         <div className="text-center">
           <h1 className="text-4xl font-bold mb-4">LIFTING業務システム</h1>
-          <p className="text-lg text-gray-600 mb-8">建築業界向けの包括的な業務管理システム</p>
+          <p className="text-lg text-gray-600 mb-8">
+            建築業界向けの包括的な業務管理システム
+          </p>
         </div>
 
         <Image
@@ -36,6 +40,20 @@ export default async function Home() {
             <li>• 従業員管理</li>
             <li>• 給与管理</li>
           </ul>
+        </div>
+
+        {/* 認証ボタン */}
+        <div className="flex gap-4 items-center flex-col sm:flex-row">
+          <SignInButton mode="modal">
+            <Button size="lg" className="w-full sm:w-auto">
+              ログイン
+            </Button>
+          </SignInButton>
+          <SignUpButton mode="modal">
+            <Button size="lg" variant="outline" className="w-full sm:w-auto">
+              サインアップ
+            </Button>
+          </SignUpButton>
         </div>
 
         <div className="flex gap-4 items-center flex-col sm:flex-row">
