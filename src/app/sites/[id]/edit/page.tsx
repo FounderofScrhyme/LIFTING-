@@ -47,7 +47,8 @@ export default function EditSitePage() {
     prefecture?: string;
     city?: string;
     address?: string;
-    startDate: string;
+    date: string;
+    startTime: string;
     employeeNames?: string;
     notes?: string;
   }) => {

@@ -1,4 +1,4 @@
-export type SiteStatus = 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
+export type SiteStatus = "ACTIVE" | "COMPLETED" | "CANCELLED";
 
 export type Site = {
   id: string;
@@ -8,7 +8,8 @@ export type Site = {
   prefecture?: string;
   city?: string;
   address?: string;
-  startDate: string; // ISO文字列
+  date: string; // ISO文字列
+  startTime: string; // ISO文字列
   employeeNames?: string; // 派遣従業員名（カンマ区切り）
   notes?: string;
   status: SiteStatus;

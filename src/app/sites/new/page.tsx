@@ -13,7 +13,8 @@ type FormValues = {
   prefecture?: string;
   city?: string;
   address?: string;
-  startDate: string;
+  date: string;
+  startTime: string;
   notes?: string;
   employeeNames?: string;
 };

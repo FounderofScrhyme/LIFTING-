@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
     const whereClause: {
       userId: string;
-      startDate?: {
+      date?: {
         gte: Date;
         lte: Date;
       };
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       const endDate = new Date(parseInt(year), parseInt(month), 0, 23, 59, 59);
 
-      whereClause.startDate = {
+      whereClause.date = {
         gte: startDate,
         lte: endDate,
       };
@@ -70,16 +70,26 @@ export async function POST(req: NextRequest) {
       prefecture,
       city,
       address,
-      startDate,
+      date,
+      startTime,
       employeeNames,
       notes,
     } = body;
-    if (!name || !contractor || !startDate) {
+    if (!name || !contractor || !date || !startTime) {
       return NextResponse.json(
         { error: "必須項目が不足しています" },
         { status: 400 }
       );
     }
+
+    // 日付と時刻を適切に処理
+    const dateObj = new Date(date);
+    const timeObj = new Date(`2000-01-01T${startTime}`);
+
+    // 日付と時刻を組み合わせて開始時刻を作成
+    const combinedDateTime = new Date(dateObj);
+    combinedDateTime.setHours(timeObj.getHours(), timeObj.getMinutes(), 0, 0);
+
     // 現場作成
     const site = await prisma.site.create({
       data: {
@@ -89,7 +99,8 @@ export async function POST(req: NextRequest) {
         prefecture,
         city,
         address,
-        startDate: new Date(startDate),
+        date: dateObj,
+        startTime: combinedDateTime,
         employeeNames,
         notes,
         userId,

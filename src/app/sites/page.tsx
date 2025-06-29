@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { SitesTable } from "@/components/tables/sites-table";
 import { Button } from "@/components/ui/button";
@@ -18,23 +18,20 @@ export default function SitesPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(
     new Date()
   );
+  const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
-  useEffect(() => {
-    if (!userId) return;
-
-    const fetchSites = async () => {
+  const fetchSites = useCallback(
+    async (date: Date) => {
       try {
         console.log("Fetching sites for userId:", userId);
+        console.log("Fetching sites for date:", date);
 
-        // 現在の年月を取得
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth() + 1; // getMonth()は0ベースなので+1
+        const year = date.getFullYear();
+        const month = date.getMonth() + 1; // getMonth()は0ベースなので+1
 
         const res = await fetch(`/api/sites?year=${year}&month=${month}`);
         console.log("Response status:", res.status);
         if (res.ok) {
-          //json()の戻り値はjsオブジェクト
           const data = await res.json();
           console.log("Fetched sites:", data);
           setSites(data);
@@ -48,10 +45,21 @@ export default function SitesPage() {
       } finally {
         setLoading(false);
       }
-    };
+    },
+    [userId]
+  );
 
-    fetchSites();
-  }, [userId]);
+  useEffect(() => {
+    if (!userId) return;
+    fetchSites(currentMonth);
+  }, [userId, currentMonth, fetchSites]);
+
+  // カレンダーの月が変更された時の処理
+  const handleMonthChange = (date: Date | undefined) => {
+    if (date) {
+      setCurrentMonth(date);
+    }
+  };
 
   // 選択された日の現場をフィルタリング
   const getSitesForDate = (date: Date | undefined) => {
@@ -59,7 +67,7 @@ export default function SitesPage() {
 
     const dateStr = format(date, "yyyy-MM-dd");
     return sites.filter((site) => {
-      const siteDate = format(new Date(site.startDate), "yyyy-MM-dd");
+      const siteDate = format(new Date(site.date), "yyyy-MM-dd");
       return siteDate === dateStr;
     });
   };
@@ -68,7 +76,7 @@ export default function SitesPage() {
   const getSiteCountForDate = (date: Date) => {
     const dateStr = format(date, "yyyy-MM-dd");
     return sites.filter((site) => {
-      const siteDate = format(new Date(site.startDate), "yyyy-MM-dd");
+      const siteDate = format(new Date(site.date), "yyyy-MM-dd");
       return dateStr === siteDate;
     }).length;
   };
@@ -126,6 +134,8 @@ export default function SitesPage() {
                   mode="single"
                   selected={selectedDate}
                   onSelect={setSelectedDate}
+                  month={currentMonth}
+                  onMonthChange={handleMonthChange}
                   className="rounded-md border w-full h-full"
                   locale={ja}
                   components={{
@@ -174,7 +184,7 @@ export default function SitesPage() {
                                 : "中止"}
                             </span>
                           </div>
-                          <div className="flex space-x-4 text-sm text-gray-600 dark:text-gray-100 space-y-1">
+                          <div className="space-y-1 text-sm">
                             <p>
                               <span className="font-medium">工務店:</span>{" "}
                               {site.contractor}
@@ -202,6 +212,26 @@ export default function SitesPage() {
                                 {site.notes}
                               </p>
                             )}
+                            <p>
+                              <span className="font-medium">現場日:</span>{" "}
+                              {site.date
+                                ? new Date(site.date).toLocaleDateString(
+                                    "ja-JP"
+                                  )
+                                : ""}
+                            </p>
+                            <p>
+                              <span className="font-medium">開始時刻:</span>{" "}
+                              {site.startTime
+                                ? new Date(site.startTime).toLocaleTimeString(
+                                    "ja-JP",
+                                    {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    }
+                                  )
+                                : ""}
+                            </p>
                           </div>
                           <div className="mt-3 flex gap-2">
                             <Link href={`/sites/${site.id}`}>
@@ -234,10 +264,12 @@ export default function SitesPage() {
         </div>
 
         {/* 今月の現場一覧（下部） */}
-        <div className="mt-8">
+        <div className="mt-6">
           <Card>
             <CardHeader>
-              <CardTitle>今月の現場一覧</CardTitle>
+              <CardTitle>
+                {format(currentMonth, "yyyy年M月", { locale: ja })}の現場一覧
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="mb-4">

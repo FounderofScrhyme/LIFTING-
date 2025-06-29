@@ -53,7 +53,8 @@ export default async function SiteDetailPage({ params }: SiteDetailPageProps) {
     prefecture: siteData.prefecture || undefined,
     city: siteData.city || undefined,
     address: siteData.address || undefined,
-    startDate: siteData.startDate.toISOString(),
+    date: siteData.date.toISOString(),
+    startTime: siteData.startTime.toISOString(),
     employeeNames: siteData.employeeNames || undefined,
     notes: siteData.notes || undefined,
     status: siteData.status,
@@ -114,8 +115,17 @@ export default async function SiteDetailPage({ params }: SiteDetailPageProps) {
               {formatAddress(site)}
             </div>
             <div>
-              <span className="font-semibold">開始日：</span>
-              {site.startDate ? site.startDate.slice(0, 10) : ""}
+              <span className="font-semibold">現場日：</span>
+              {site.date ? new Date(site.date).toLocaleDateString("ja-JP") : ""}
+            </div>
+            <div>
+              <span className="font-semibold">開始時刻：</span>
+              {site.startTime
+                ? new Date(site.startTime).toLocaleTimeString("ja-JP", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : ""}
             </div>
             <div>
               <span className="font-semibold">従業員：</span>

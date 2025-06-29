@@ -13,6 +13,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
+import { Employee } from "@/types/employee";
 
 const schema = z.object({
   name: z.string().min(1, "現場名は必須です"),
@@ -21,7 +24,8 @@ const schema = z.object({
   prefecture: z.string().optional(),
   city: z.string().optional(),
   address: z.string().optional(),
-  startDate: z.string().min(1, "開始日は必須です"),
+  date: z.string().min(1, "現場日は必須です"),
+  startTime: z.string().min(1, "開始時刻は必須です"),
   notes: z.string().optional(),
   employeeNames: z.string().optional(),
 });
@@ -36,8 +40,12 @@ type Props = {
 
 export function SiteForm({ defaultValues, onSubmit, submitting }: Props) {
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [contractorInput, setContractorInput] = useState("");
   const [contractorSelect, setContractorSelect] = useState("");
+  const [selectedEmployees, setSelectedEmployees] = useState<Employee[]>([]);
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
 
   const {
     register,
@@ -59,6 +67,32 @@ export function SiteForm({ defaultValues, onSubmit, submitting }: Props) {
       .then((data) => setClients(data));
   }, []);
 
+  // 従業員リスト取得
+  useEffect(() => {
+    fetch("/api/employees")
+      .then((res) => res.json())
+      .then((data) => setEmployees(data));
+  }, []);
+
+  // 従業員検索フィルタリング
+  useEffect(() => {
+    if (employeeSearch.trim() === "") {
+      setFilteredEmployees(
+        employees.filter(
+          (emp) => !selectedEmployees.some((selected) => selected.id === emp.id)
+        )
+      );
+    } else {
+      setFilteredEmployees(
+        employees.filter(
+          (emp) =>
+            emp.name.toLowerCase().includes(employeeSearch.toLowerCase()) &&
+            !selectedEmployees.some((selected) => selected.id === emp.id)
+        )
+      );
+    }
+  }, [employeeSearch, employees, selectedEmployees]);
+
   // 工務店名の同期
   useEffect(() => {
     if (contractorSelect) {
@@ -67,6 +101,38 @@ export function SiteForm({ defaultValues, onSubmit, submitting }: Props) {
       setValue("contractor", contractorInput);
     }
   }, [contractorSelect, contractorInput, setValue]);
+
+  // 従業員選択処理
+  const handleEmployeeSelect = (employee: Employee) => {
+    setSelectedEmployees([...selectedEmployees, employee]);
+    setEmployeeSearch("");
+    // フォームの値も更新
+    const employeeNames = [...selectedEmployees, employee]
+      .map((emp) => emp.name)
+      .join(", ");
+    setValue("employeeNames", employeeNames);
+  };
+
+  // 従業員削除処理
+  const handleEmployeeRemove = (employeeId: string) => {
+    const updatedEmployees = selectedEmployees.filter(
+      (emp) => emp.id !== employeeId
+    );
+    setSelectedEmployees(updatedEmployees);
+    const employeeNames = updatedEmployees.map((emp) => emp.name).join(", ");
+    setValue("employeeNames", employeeNames);
+  };
+
+  // 初期値から従業員を設定
+  useEffect(() => {
+    if (defaultValues?.employeeNames) {
+      const names = defaultValues.employeeNames.split(", ").filter(Boolean);
+      const matchedEmployees = employees.filter((emp) =>
+        names.includes(emp.name)
+      );
+      setSelectedEmployees(matchedEmployees);
+    }
+  }, [defaultValues?.employeeNames, employees]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -151,23 +217,70 @@ export function SiteForm({ defaultValues, onSubmit, submitting }: Props) {
         <Input id="address" {...register("address")} placeholder="1-1-1" />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="startDate">開始日</Label>
-        <Input id="startDate" type="date" {...register("startDate")} />
-        {errors.startDate && (
+        <Label htmlFor="date">現場日</Label>
+        <Input id="date" {...register("date")} type="date" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="startTime">開始時刻</Label>
+        <Input id="startTime" type="time" {...register("startTime")} />
+        {errors.startTime && (
           <p className="text-red-500 text-xs mt-1">
-            {errors.startDate.message}
+            {errors.startTime.message}
           </p>
         )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="employeeNames">派遣従業員</Label>
-        <Input
-          id="employeeNames"
-          {...register("employeeNames")}
-          placeholder="田中太郎, 佐藤花子, 山田次郎"
-        />
+        <div className="space-y-3">
+          {/* 従業員検索入力 */}
+          <Input
+            placeholder="従業員名を入力して検索..."
+            value={employeeSearch}
+            onChange={(e) => setEmployeeSearch(e.target.value)}
+          />
+
+          {/* 検索結果 */}
+          {employeeSearch && filteredEmployees.length > 0 && (
+            <div className="border rounded-md p-2 max-h-32 overflow-y-auto">
+              {filteredEmployees.map((employee) => (
+                <div
+                  key={employee.id}
+                  className="p-2 hover:bg-gray-100 cursor-pointer rounded"
+                  onClick={() => handleEmployeeSelect(employee)}
+                >
+                  {employee.name}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* 選択された従業員 */}
+          {selectedEmployees.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedEmployees.map((employee) => (
+                <Badge
+                  key={employee.id}
+                  variant="secondary"
+                  className="flex items-center gap-1"
+                >
+                  {employee.name}
+                  <button
+                    type="button"
+                    onClick={() => handleEmployeeRemove(employee.id)}
+                    className="ml-1 hover:text-red-500"
+                  >
+                    <X size={12} />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          {/* 隠しフィールド */}
+          <input type="hidden" {...register("employeeNames")} />
+        </div>
         <p className="text-xs text-gray-500">
-          複数の従業員はカンマ（,）で区切って入力してください
+          従業員名を入力して検索し、選択してください
         </p>
       </div>
       <div className="space-y-2">

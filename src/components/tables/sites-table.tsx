@@ -42,7 +42,8 @@ export function SitesTable({ sites, onDelete }: Props) {
           <TableHead>現場名</TableHead>
           <TableHead>工務店名</TableHead>
           <TableHead>住所</TableHead>
-          <TableHead>開始日</TableHead>
+          <TableHead>現場日</TableHead>
+          <TableHead>開始時刻</TableHead>
           <TableHead>従業員</TableHead>
           <TableHead>ステータス</TableHead>
           <TableHead>操作</TableHead>
@@ -55,7 +56,15 @@ export function SitesTable({ sites, onDelete }: Props) {
             <TableCell>{site.contractor}</TableCell>
             <TableCell>{formatAddress(site)}</TableCell>
             <TableCell>
-              {site.startDate ? site.startDate.slice(0, 10) : ""}
+              {site.date ? new Date(site.date).toLocaleDateString("ja-JP") : ""}
+            </TableCell>
+            <TableCell>
+              {site.startTime
+                ? new Date(site.startTime).toLocaleTimeString("ja-JP", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : ""}
             </TableCell>
             <TableCell>{site.employeeNames || "-"}</TableCell>
             <TableCell>

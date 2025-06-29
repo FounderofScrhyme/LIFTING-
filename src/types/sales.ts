@@ -4,7 +4,7 @@ export interface Sales {
   date: Date;
   description?: string;
   category?: string;
-  status: 'COMPLETED' | 'PENDING' | 'CANCELLED';
+  status: "COMPLETED" | "PENDING" | "CANCELLED";
   createdAt: Date;
   updatedAt: Date;
   userId: string;
@@ -13,6 +13,8 @@ export interface Sales {
     id: string;
     name: string;
     companyName?: string;
+    email?: string;
+    phone?: string;
   };
 }
 
@@ -21,7 +23,7 @@ export interface CreateSalesInput {
   date: string; // ISO string
   description?: string;
   category?: string;
-  status?: 'COMPLETED' | 'PENDING' | 'CANCELLED';
+  status?: "COMPLETED" | "PENDING" | "CANCELLED";
   clientId: string;
 }
 

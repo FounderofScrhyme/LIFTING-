@@ -87,7 +87,9 @@ model Payroll {
   workHours     Int? // 勤務時間（時間）
   overtimeHours Int? // 残業時間（時間）
   siteCount     Int // 出勤現場数
+  unitPay       Int // 現場単価（円）
   sitePay       Int // 現場手当（現場数×現場単価）
+  hourlyOvertimePay Int // 残業時間単価（円）
   overtime      Int // 残業手当（残業時間×時間単価）
   totalAmount   Int // 総支給額（現場手当＋残業手当）
   status        PayrollStatus     @default(PENDING)
@@ -108,7 +110,8 @@ model Site {
   prefecture    String?    // 都道府県
   city          String?    // 市区町村
   address       String?    // 番地
-  startDate     DateTime   // 開始日
+  date          DateTime   // 現場日
+  startTime     DateTime   // 開始時刻
   employeeNames String?    // 派遣従業員名（カンマ区切り）
   notes         String?    // 備考
   status        SiteStatus @default(ACTIVE)
