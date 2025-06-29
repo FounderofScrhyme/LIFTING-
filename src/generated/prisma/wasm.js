@@ -141,6 +141,87 @@ exports.Prisma.ClientScalarFieldEnum = {
   userId: 'userId'
 };
 
+exports.Prisma.EmployeeScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  email: 'email',
+  phone: 'phone',
+  emergencyContactPerson: 'emergencyContactPerson',
+  emergencyContactPhone: 'emergencyContactPhone',
+  address: 'address',
+  postalCode: 'postalCode',
+  city: 'city',
+  prefecture: 'prefecture',
+  position: 'position',
+  unitPay: 'unitPay',
+  hourlyOvertimePay: 'hourlyOvertimePay',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId'
+};
+
+exports.Prisma.SalesScalarFieldEnum = {
+  id: 'id',
+  amount: 'amount',
+  date: 'date',
+  description: 'description',
+  category: 'category',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId',
+  clientId: 'clientId'
+};
+
+exports.Prisma.PayrollScalarFieldEnum = {
+  id: 'id',
+  employeeId: 'employeeId',
+  periodType: 'periodType',
+  startDate: 'startDate',
+  endDate: 'endDate',
+  workHours: 'workHours',
+  overtimeHours: 'overtimeHours',
+  siteCount: 'siteCount',
+  unitPay: 'unitPay',
+  sitePay: 'sitePay',
+  hourlyOvertimePay: 'hourlyOvertimePay',
+  overtime: 'overtime',
+  totalAmount: 'totalAmount',
+  status: 'status',
+  paymentDate: 'paymentDate',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId'
+};
+
+exports.Prisma.SiteScalarFieldEnum = {
+  id: 'id',
+  name: 'name',
+  contractor: 'contractor',
+  postalCode: 'postalCode',
+  prefecture: 'prefecture',
+  city: 'city',
+  address: 'address',
+  date: 'date',
+  startTime: 'startTime',
+  employeeNames: 'employeeNames',
+  notes: 'notes',
+  status: 'status',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  userId: 'userId'
+};
+
+exports.Prisma.SiteEmployeeScalarFieldEnum = {
+  id: 'id',
+  siteId: 'siteId',
+  employeeId: 'employeeId',
+  createdAt: 'createdAt',
+  userId: 'userId'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -161,8 +242,36 @@ exports.ClientStatus = exports.$Enums.ClientStatus = {
   PROSPECT: 'PROSPECT'
 };
 
+exports.SalesStatus = exports.$Enums.SalesStatus = {
+  COMPLETED: 'COMPLETED',
+  PENDING: 'PENDING',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.PayrollPeriodType = exports.$Enums.PayrollPeriodType = {
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY'
+};
+
+exports.PayrollStatus = exports.$Enums.PayrollStatus = {
+  PENDING: 'PENDING',
+  PAID: 'PAID',
+  CANCELLED: 'CANCELLED'
+};
+
+exports.SiteStatus = exports.$Enums.SiteStatus = {
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED'
+};
+
 exports.Prisma.ModelName = {
-  Client: 'Client'
+  Client: 'Client',
+  Employee: 'Employee',
+  Sales: 'Sales',
+  Payroll: 'Payroll',
+  Site: 'Site',
+  SiteEmployee: 'SiteEmployee'
 };
 
 /**

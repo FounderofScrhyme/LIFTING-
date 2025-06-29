@@ -28,11 +28,144 @@ model Client {
   updatedAt     DateTime     @updatedAt
   userId        String
 
+  // 関連
+  sales Sales[]
+
   @@map("clients")
+}
+
+model Employee {
+  id                     String   @id @default(cuid())
+  name                   String
+  email                  String?
+  phone                  String?
+  emergencyContactPerson String? // 緊急連絡先名
+  emergencyContactPhone  String? // 緊急連絡先電話番号
+  address                String?
+  postalCode             String?
+  city                   String?
+  prefecture             String?
+  position               String? // 役職
+  unitPay                Int? // 現場単価（円）
+  hourlyOvertimePay      Int? // 一時間あたりの残業代
+  notes                  String? // 備考
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  userId                 String // ClerkのユーザーID
+
+  // 関連
+  payrolls      Payroll[]
+  siteEmployees SiteEmployee[]
+
+  @@map("employees")
+}
+
+model Sales {
+  id          String      @id @default(cuid())
+  amount      Int // 売上額（円）
+  date        DateTime // 売上日
+  description String? // 備考
+  category    String? // カテゴリ（工事費、材料費など）
+  status      SalesStatus @default(COMPLETED)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  userId      String // ClerkのユーザーID
+
+  // 取引先との関連
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@map("sales")
+}
+
+model Payroll {
+  id                String            @id @default(cuid())
+  employeeId        String
+  employee          Employee          @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  periodType        PayrollPeriodType @default(MONTHLY) // 給与期間タイプ
+  startDate         DateTime // 給与期間開始日
+  endDate           DateTime // 給与期間終了日
+  workHours         Int? // 勤務時間（時間）
+  overtimeHours     Int? // 残業時間（時間）
+  siteCount         Int // 出勤現場数
+  unitPay           Int // 現場単価（円）
+  sitePay           Int // 現場手当（現場数×現場単価）
+  hourlyOvertimePay Int // 残業時間単価（円）
+  overtime          Int // 残業手当（残業時間×時間単価）
+  totalAmount       Int // 総支給額（現場手当＋残業手当）
+  status            PayrollStatus     @default(PENDING)
+  paymentDate       DateTime? // 支払い日
+  notes             String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  userId            String // ClerkのユーザーID
+
+  @@map("payrolls")
+}
+
+model Site {
+  id            String     @id @default(cuid())
+  name          String // 現場名
+  contractor    String // 工務店名
+  postalCode    String? // 郵便番号
+  prefecture    String? // 都道府県
+  city          String? // 市区町村
+  address       String? // 番地
+  date          DateTime // 現場日
+  startTime     DateTime // 開始時刻
+  employeeNames String? // 派遣従業員名（カンマ区切り）
+  notes         String? // 備考
+  status        SiteStatus @default(ACTIVE)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  userId        String // ClerkのユーザーID
+
+  // 関連
+  siteEmployees SiteEmployee[]
+
+  @@map("sites")
+}
+
+model SiteEmployee {
+  id         String   @id @default(cuid())
+  siteId     String
+  employeeId String
+  createdAt  DateTime @default(now())
+  userId     String // ClerkのユーザーID
+
+  // 関連
+  site     Site     @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, employeeId])
+  @@map("site_employees")
 }
 
 enum ClientStatus {
   ACTIVE
   INACTIVE
   PROSPECT
+}
+
+enum SalesStatus {
+  COMPLETED
+  PENDING
+  CANCELLED
+}
+
+enum PayrollStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum PayrollPeriodType {
+  WEEKLY
+  MONTHLY
+}
+
+enum SiteStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
 }
