@@ -12,10 +12,12 @@ import {
   User,
   Building2,
   Edit,
+  ArrowLeft,
+  DollarSign,
+  Clock,
 } from "lucide-react";
 import Link from "next/link";
 import { DeleteEmployeeButton } from "@/components/employees/delete-employee-button";
-import { Employee } from "@/types/employee";
 
 interface EmployeeDetailPageProps {
   params: {

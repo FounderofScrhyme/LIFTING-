@@ -6,36 +6,55 @@ const prisma = new PrismaClient();
 
 // GET: 詳細取得
 export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId } = await auth();
-  if (!userId)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id } = await params;
   try {
-    const site = await prisma.site.findUnique({
-      where: { id, userId },
+    const { userId } = await auth();
+    const { id } = await params;
+
+    if (!userId) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const site = await prisma.site.findFirst({
+      where: {
+        id,
+        userId,
+      },
     });
-    if (!site)
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+    if (!site) {
+      return NextResponse.json(
+        { error: "現場が見つかりません" },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json(site);
-  } catch {
-    return NextResponse.json({ error: "取得に失敗しました" }, { status: 500 });
+  } catch (error) {
+    console.error("現場取得エラー:", error);
+    return NextResponse.json(
+      { error: "現場の取得に失敗しました" },
+      { status: 500 }
+    );
   }
 }
 
 // PUT: 編集
 export async function PUT(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId } = await auth();
-  if (!userId)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id } = await params;
   try {
-    const body = await req.json();
+    const { userId } = await auth();
+    const { id } = await params;
+
+    if (!userId) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    const body = await request.json();
     const {
       name,
       contractor,
@@ -82,24 +101,53 @@ export async function PUT(
       },
     });
     return NextResponse.json(site);
-  } catch {
-    return NextResponse.json({ error: "更新に失敗しました" }, { status: 500 });
+  } catch (error) {
+    console.error("現場更新エラー:", error);
+    return NextResponse.json(
+      { error: "現場の更新に失敗しました" },
+      { status: 500 }
+    );
   }
 }
 
 // DELETE: 削除
 export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { userId } = await auth();
-  if (!userId)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  const { id } = await params;
   try {
-    await prisma.site.delete({ where: { id, userId } });
-    return NextResponse.json({ ok: true });
-  } catch {
-    return NextResponse.json({ error: "削除に失敗しました" }, { status: 500 });
+    const { userId } = await auth();
+    const { id } = await params;
+
+    if (!userId) {
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+    }
+
+    // 現場が存在するかチェック
+    const existingSite = await prisma.site.findFirst({
+      where: {
+        id,
+        userId,
+      },
+    });
+
+    if (!existingSite) {
+      return NextResponse.json(
+        { error: "現場が見つかりません" },
+        { status: 404 }
+      );
+    }
+
+    await prisma.site.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ message: "現場を削除しました" });
+  } catch (error) {
+    console.error("現場削除エラー:", error);
+    return NextResponse.json(
+      { error: "現場の削除に失敗しました" },
+      { status: 500 }
+    );
   }
 }

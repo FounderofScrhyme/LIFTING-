@@ -1,25 +1,24 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
-import { prisma } from '@/lib/db';
-import { CreateSalesInput } from '@/types/sales';
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
+import { prisma } from "@/lib/db";
+import { CreateSalesInput } from "@/types/sales";
 
 // GET: 特定の売上を取得
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('GET /api/sales/[id] - 開始:', params.id);
     const { userId } = await auth();
-    
+    const { id } = await params;
+
     if (!userId) {
-      console.log('GET /api/sales/[id] - 認証エラー');
-      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const sales = await prisma.sales.findFirst({
       where: {
-        id: params.id,
+        id,
         userId,
       },
       include: {
@@ -36,16 +35,17 @@ export async function GET(
     });
 
     if (!sales) {
-      console.log('GET /api/sales/[id] - 売上が見つかりません');
-      return NextResponse.json({ error: '売上が見つかりません' }, { status: 404 });
+      return NextResponse.json(
+        { error: "売上が見つかりません" },
+        { status: 404 }
+      );
     }
 
-    console.log('GET /api/sales/[id] - 取得成功');
     return NextResponse.json(sales);
   } catch (error) {
-    console.error('GET /api/sales/[id] - エラー:', error);
+    console.error("売上取得エラー:", error);
     return NextResponse.json(
-      { error: '売上の取得に失敗しました' },
+      { error: "売上の取得に失敗しました" },
       { status: 500 }
     );
   }
@@ -54,54 +54,58 @@ export async function GET(
 // PUT: 売上を更新
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('PUT /api/sales/[id] - 開始:', params.id);
     const { userId } = await auth();
-    
+    const { id } = await params;
+
     if (!userId) {
-      console.log('PUT /api/sales/[id] - 認証エラー');
-      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
     const body: CreateSalesInput = await request.json();
-    console.log('PUT /api/sales/[id] - リクエストボディ:', body);
 
-    // 売上の存在確認
+    // 売上が存在するかチェック
     const existingSales = await prisma.sales.findFirst({
       where: {
-        id: params.id,
+        id,
         userId,
       },
     });
 
     if (!existingSales) {
-      console.log('PUT /api/sales/[id] - 売上が見つかりません');
-      return NextResponse.json({ error: '売上が見つかりません' }, { status: 404 });
+      return NextResponse.json(
+        { error: "売上が見つかりません" },
+        { status: 404 }
+      );
     }
 
     // バリデーション
     if (!body.amount || body.amount <= 0) {
-      console.log('PUT /api/sales/[id] - バリデーションエラー: 売上額が無効');
+      console.log("PUT /api/sales/[id] - バリデーションエラー: 売上額が無効");
       return NextResponse.json(
-        { error: '有効な売上額を入力してください' },
+        { error: "有効な売上額を入力してください" },
         { status: 400 }
       );
     }
 
     if (!body.clientId) {
-      console.log('PUT /api/sales/[id] - バリデーションエラー: 取引先が選択されていません');
+      console.log(
+        "PUT /api/sales/[id] - バリデーションエラー: 取引先が選択されていません"
+      );
       return NextResponse.json(
-        { error: '取引先を選択してください' },
+        { error: "取引先を選択してください" },
         { status: 400 }
       );
     }
 
     if (!body.date) {
-      console.log('PUT /api/sales/[id] - バリデーションエラー: 売上日が設定されていません');
+      console.log(
+        "PUT /api/sales/[id] - バリデーションエラー: 売上日が設定されていません"
+      );
       return NextResponse.json(
-        { error: '売上日を設定してください' },
+        { error: "売上日を設定してください" },
         { status: 400 }
       );
     }
@@ -115,23 +119,23 @@ export async function PUT(
     });
 
     if (!client) {
-      console.log('PUT /api/sales/[id] - エラー: 取引先が見つかりません');
+      console.log("PUT /api/sales/[id] - エラー: 取引先が見つかりません");
       return NextResponse.json(
-        { error: '選択された取引先が見つかりません' },
+        { error: "選択された取引先が見つかりません" },
         { status: 404 }
       );
     }
 
     const updatedSales = await prisma.sales.update({
       where: {
-        id: params.id,
+        id,
       },
       data: {
         amount: body.amount,
         date: new Date(body.date),
         description: body.description,
         category: body.category,
-        status: body.status || 'COMPLETED',
+        status: body.status || "COMPLETED",
         clientId: body.clientId,
       },
       include: {
@@ -145,12 +149,11 @@ export async function PUT(
       },
     });
 
-    console.log('PUT /api/sales/[id] - 更新成功');
     return NextResponse.json(updatedSales);
   } catch (error) {
-    console.error('PUT /api/sales/[id] - エラー:', error);
+    console.error("売上更新エラー:", error);
     return NextResponse.json(
-      { error: '売上の更新に失敗しました' },
+      { error: "売上の更新に失敗しました" },
       { status: 500 }
     );
   }
@@ -159,44 +162,41 @@ export async function PUT(
 // DELETE: 売上を削除
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('DELETE /api/sales/[id] - 開始:', params.id);
     const { userId } = await auth();
-    
+    const { id } = await params;
+
     if (!userId) {
-      console.log('DELETE /api/sales/[id] - 認証エラー');
-      return NextResponse.json({ error: '認証が必要です' }, { status: 401 });
+      return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
     }
 
-    // 売上の存在確認
+    // 売上が存在するかチェック
     const existingSales = await prisma.sales.findFirst({
       where: {
-        id: params.id,
+        id,
         userId,
       },
     });
 
     if (!existingSales) {
-      console.log('DELETE /api/sales/[id] - 売上が見つかりません');
-      return NextResponse.json({ error: '売上が見つかりません' }, { status: 404 });
+      return NextResponse.json(
+        { error: "売上が見つかりません" },
+        { status: 404 }
+      );
     }
 
-    // 売上を削除
     await prisma.sales.delete({
-      where: {
-        id: params.id,
-      },
+      where: { id },
     });
 
-    console.log('DELETE /api/sales/[id] - 削除成功');
-    return NextResponse.json({ message: '売上を削除しました' });
+    return NextResponse.json({ message: "売上を削除しました" });
   } catch (error) {
-    console.error('DELETE /api/sales/[id] - エラー:', error);
+    console.error("売上削除エラー:", error);
     return NextResponse.json(
-      { error: '売上の削除に失敗しました' },
+      { error: "売上の削除に失敗しました" },
       { status: 500 }
     );
   }
-} 
+}
