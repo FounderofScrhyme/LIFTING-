@@ -55,14 +55,32 @@ function PayrollContent() {
   );
   const [savedPayrolls, setSavedPayrolls] = useState<SavedPayroll[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedPeriod, setSelectedPeriod] = useState({
-    startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-      .toISOString()
-      .split("T")[0],
-    endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
-      .toISOString()
-      .split("T")[0],
-  });
+  // ローカルストレージから期間を取得する関数
+  const getInitialPeriod = () => {
+    if (typeof window !== "undefined") {
+      const savedStartDate = localStorage.getItem("payrollStartDate");
+      const savedEndDate = localStorage.getItem("payrollEndDate");
+
+      if (savedStartDate && savedEndDate) {
+        return {
+          startDate: savedStartDate,
+          endDate: savedEndDate,
+        };
+      }
+    }
+
+    // デフォルト値（今月の初日から月末まで）
+    return {
+      startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+        .toISOString()
+        .split("T")[0],
+      endDate: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0)
+        .toISOString()
+        .split("T")[0],
+    };
+  };
+
+  const [selectedPeriod, setSelectedPeriod] = useState(getInitialPeriod);
 
   const fetchSavedPayrolls = useCallback(async () => {
     try {
@@ -91,7 +109,7 @@ function PayrollContent() {
         if (response.ok) {
           const data = await response.json();
           console.log(`従業員 ${employee.name} のAPIレスポンス:`, data);
-          const siteCount = data.siteCount;
+          const siteCount = data.siteCount || 0;
           const unitPay = employee.unitPay || 0;
           const totalAmount = siteCount * unitPay;
 
@@ -172,10 +190,20 @@ function PayrollContent() {
     field: "startDate" | "endDate",
     value: string
   ) => {
-    setSelectedPeriod((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setSelectedPeriod((prev) => {
+      const newPeriod = {
+        ...prev,
+        [field]: value,
+      };
+
+      // ローカルストレージに保存
+      if (typeof window !== "undefined") {
+        localStorage.setItem("payrollStartDate", newPeriod.startDate);
+        localStorage.setItem("payrollEndDate", newPeriod.endDate);
+      }
+
+      return newPeriod;
+    });
   };
 
   const handleRefresh = () => {
@@ -265,7 +293,10 @@ function PayrollContent() {
                   </span>
                 </div>
                 <div className="text-lg font-semibold">
-                  総支給額: ¥{summary.totalAmount.toLocaleString()}
+                  総支給額: ¥
+                  {isNaN(summary.totalAmount)
+                    ? 0
+                    : summary.totalAmount.toLocaleString()}
                 </div>
                 <Link
                   href={`/payroll/new?employeeId=${summary.employeeId}&startDate=${summary.period.startDate}&endDate=${summary.period.endDate}`}
@@ -301,7 +332,10 @@ function PayrollContent() {
                   </div>
                   <div className="text-right">
                     <div className="font-semibold">
-                      ¥{payroll.totalAmount.toLocaleString()}
+                      ¥
+                      {isNaN(payroll.totalAmount)
+                        ? 0
+                        : payroll.totalAmount.toLocaleString()}
                     </div>
                     <Badge
                       variant={
